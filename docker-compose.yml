@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  traefik:
+    image: "traefik:v2.4"
+    container_name: "traefik"
+    command:
+      # development
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      # providers
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      # entrypoints
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # enable & redirect to https
+      # - "--entrypoints.web.http.redirections.entrypoint.to=websecure" 
+      # - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      # - "--certificatesresolvers.myresolver.acme.email=postmaster@example.com"
+      # - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+    ports:
+      - "80:80"
+      # - "443:443"
+      - "8080:8080"
+    volumes:
+      # enable https
+      # - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  test:
+    image: "nickp2287apps/ls-test"
+    container_name: "test"
+    depends_on: 
+      - traefik
+    deploy:
+      replicas: 1
+    environment:
+      - "PORT=5555"
+    # networks: 
+    #   - example
+    # ports:
+    #   - "5555:5555"
+    # volumes:
+    #   - ./:/app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.1.entrypoints=web"
+      - "traefik.http.routers.1.rule=Path(`/node-test`)"
+      - "traefik.http.services.1.loadbalancer.server.port=5555"
+      # enable https
+      # - "traefik.http.routers.1.entrypoints=websecure"
+      # - "traefik.http.routers.whoami.entrypoints=websecure"
+      # - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+
+networks:
+  example:
+volumes: 
+  db:
